@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ottomate Post Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--g:#12b981;--gd:#0e8f63;--l:#ffd84d;--i:#17241d;--w:#fffdf4;--m:#e8faf1;--r:#ff6b5b;--mut:#6b7a72}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Baloo 2',system-ui,sans-serif;background:var(--w);color:var(--i)}
+button{font:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:5;background:var(--w);border-bottom:4px solid var(--i);padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:26px;margin-right:auto}
+.brand small{font-weight:600;font-size:16px;color:var(--mut);margin-left:4px}
+.btn{border:3px solid var(--i);background:#fff;border-radius:999px;padding:4px 16px;font-weight:700;font-size:16px;box-shadow:3px 3px 0 var(--i)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--i)}
+.btn.g{background:var(--g);color:#fff}.btn.y{background:var(--l)}.btn.r{background:var(--r);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.week{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px}
+.week .btn{padding:2px 12px}
+#msg{margin:12px 22px 0;min-height:0}
+.note{border:3px solid var(--i);border-radius:14px;padding:8px 14px;font-weight:600;margin-bottom:8px;background:var(--m)}
+.note.err{background:#ffe1dd}.note.ok{background:#dff7ec}.note.busy{background:#fff6cc}
+.wrap{overflow-x:auto;padding:16px 22px 40px}
+#grid{display:grid;grid-template-columns:repeat(7,minmax(190px,1fr));gap:14px;min-width:1380px}
+.day{background:#fff;border:3px solid var(--i);border-radius:18px;box-shadow:5px 5px 0 var(--i);display:flex;flex-direction:column;overflow:hidden}
+.day.today{box-shadow:5px 5px 0 var(--g)}
+.dh{padding:8px 12px;border-bottom:3px solid var(--i);display:flex;justify-content:space-between;align-items:baseline;background:var(--l)}
+.day.today .dh{background:var(--g);color:#fff}
+.dh b{font-size:20px}.dh span{font-weight:600}
+.slots{padding:10px;display:flex;flex-direction:column;gap:10px;flex:1}
+.slot{border:2.5px dashed #b9c6bf;border-radius:14px;padding:6px;min-height:92px;transition:.15s}
+.slot.over{border-color:var(--g);background:var(--m)}
+.slot.past{opacity:.55}
+.st{display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:700;color:var(--mut);padding:0 4px 4px}
+.empty{font-size:13px;color:#9aa8a1;text-align:center;padding:14px 4px;font-weight:600}
+.card{display:flex;gap:8px;align-items:center;background:var(--w);border:2.5px solid var(--i);border-radius:12px;padding:5px;cursor:grab;margin-top:4px}
+.card:active{cursor:grabbing}
+.th{width:54px;height:66px;border-radius:8px;object-fit:cover;flex:none;border:2px solid var(--i);background:var(--m);display:flex;align-items:center;justify-content:center;font-size:24px}
+.cm{min-width:0;flex:1}
+.cap{font-size:12.5px;line-height:1.2;color:#3c4a43;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px}
+.chip{font-size:11.5px;font-weight:800;border-radius:999px;padding:0 7px;border:2px solid var(--i);background:#fff;text-transform:uppercase;letter-spacing:.3px}
+.chip.post{background:var(--l)}.chip.story{background:#c8f0ff}.chip.reel{background:#ffd0e6}.chip.carousel{background:#e5dcff}
+.chip.posted{background:var(--g);color:#fff}.chip.failed{background:var(--r);color:#fff}.chip.missed{background:#ddd}
+.add{border:none;background:none;color:var(--gd);font-weight:800;font-size:14px;padding:4px;text-align:left}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(23,36,29,.55);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.ov.on{display:flex}
+.mod{background:var(--w);border:4px solid var(--i);border-radius:24px;box-shadow:8px 8px 0 var(--i);width:min(820px,100%);max-height:92vh;overflow:auto;padding:22px}
+.mod h2{margin:0 0 12px;font-size:28px}
+.mgrid{display:grid;grid-template-columns:260px 1fr;gap:20px}
+@media(max-width:700px){.mgrid{grid-template-columns:1fr}}
+.prev{display:flex;flex-direction:column;gap:6px}
+.prev img,.prev video{width:100%;border:3px solid var(--i);border-radius:14px;background:#fff}
+.pv{display:flex;gap:6px;flex-wrap:wrap}.pv img{width:80px}
+label{font-weight:700;font-size:15px;display:block;margin:8px 0 3px}
+input,select,textarea{font:inherit;font-size:16px;width:100%;border:3px solid var(--i);border-radius:12px;padding:6px 10px;background:#fff;color:var(--i)}
+textarea{min-height:200px;resize:vertical;font-family:system-ui,sans-serif;font-size:15px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.hint{font-size:13.5px;color:var(--mut);font-weight:600}
+.warn{color:#b3261e;font-weight:700;font-size:14px}
+.acts{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.acts .left{margin-right:auto}
+.legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;font-weight:600;color:var(--mut);padding:10px 22px 0}
+code{background:var(--m);padding:1px 6px;border-radius:6px}
+ol{padding-left:22px}li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 120 120"><rect x="6" y="14" width="98" height="98" rx="26" fill="#17241d" transform="rotate(-4 55 63)"/><rect x="14" y="6" width="98" height="98" rx="24" fill="#12b981" stroke="#17241d" stroke-width="7"/><text x="63" y="78" text-anchor="middle" font-family="Baloo 2" font-weight="800" font-size="62" fill="#fffdf4">O</text></svg>
+    Ottomate <small>Post Planner</small>
+  </div>
+  <div class="week"><button class="btn" id="prev">‹</button><span id="wlabel">…</span><button class="btn" id="next">›</button><button class="btn" id="today">This week</button></div>
+  <button class="btn y" id="postnow" title="Post anything that's due right now, without waiting for the timer">Post due now</button>
+  <button class="btn" id="reload">Refresh</button>
+  <button class="btn" id="settings">Settings</button>
+</header>
+<div class="legend">Drag an image or video from your computer onto a slot. Drag a card to another slot to move it. Click a card to edit. Drop several images on one slot to make a carousel.</div>
+<div id="msg"></div>
+<div class="wrap"><div id="grid"></div></div>
+
+<div class="ov" id="edit"><div class="mod" id="editbox"></div></div>
+<div class="ov" id="setup"><div class="mod">
+  <h2>Connect the planner</h2>
+  <p>The planner needs its own GitHub key to save posts to your repo. It's stored only in this browser.</p>
+  <ol>
+    <li>Go to <b>github.com/settings/personal-access-tokens</b> and click <b>Generate new token</b>.</li>
+    <li>Name: <code>ottomate-planner</code>. Expiration: <b>No expiration</b>.</li>
+    <li>Repository access: <b>Only select repositories</b>, then <code>ottomate-instagram</code>.</li>
+    <li>Permissions: <b>Contents: Read and write</b> and <b>Actions: Read and write</b>.</li>
+    <li>Generate it, copy it, and paste it below.</li>
+  </ol>
+  <label>GitHub key</label><input id="tok" type="password" placeholder="github_pat_…">
+  <div class="row"><div><label>GitHub username</label><input id="own"></div><div><label>Repository</label><input id="rep"></div></div>
+  <div class="acts"><button class="btn left" id="forget">Forget key</button><button class="btn" id="closeset">Close</button><button class="btn g" id="saveset">Save &amp; connect</button></div>
+</div></div>
+
+<script>
+// ---------- state
+const SLOTS = [{t:'08:30',k:'post',n:'Morning post'},{t:'12:30',k:'story',n:'Story'},{t:'19:00',k:'post',n:'Evening post'}];
+const NEW_BATCH = 'planner-uploads';
+const LATE_H = 6;
+const host = location.hostname.endsWith('github.io') ? location.hostname.split('.')[0] : '';
+const S = {
+  owner: localStorage.getItem('om_owner') || host || 'ottomateai',
+  repo: localStorage.getItem('om_repo') || (location.pathname.split('/')[1] || 'ottomate-instagram'),
+  token: localStorage.getItem('om_token') || '',
+  batches: {}, posted: {}, postedSha: null, local: {}, week: monday(new Date()), drag: null
+};
+const $ = s => document.querySelector(s);
+
+// ---------- dates
+function monday(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x;}
+function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function parseYmd(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function utcDays(s){const [y,m,d]=s.split('-').map(Number);return Date.UTC(y,m-1,d)/864e5;}
+function addDays(s,n){const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d);}
+function at(dateStr,time){const d=parseYmd(dateStr);const [h,m]=time.split(':').map(Number);d.setHours(h,m,0,0);return d;}
+const fmtDay = d => d.toLocaleDateString('en-GB',{weekday:'short'});
+const fmtDate = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+
+// ---------- base64 / csv
+function b64ToText(b){const bin=atob(b.replace(/\n/g,''));return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));}
+function bytesToB64(bytes){let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(s);}
+const textToB64 = t => bytesToB64(new TextEncoder().encode(t));
+function parseCSV(text){
+  const rows=[];let row=[],f='',q=false;text=text.replace(/^\uFEFF/,'');
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true;else if(c===','){row.push(f);f='';}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(f);f='';if(row.length>1||row[0]!=='')rows.push(row);row=[];}
+    else f+=c;}
+  if(f!==''||row.length){row.push(f);rows.push(row);}
+  const h=rows.shift()||[];return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k.trim(),r[i]??''])));
+}
+const COLS=['id','day','time','type','media','caption'];
+function toCSV(rows){const esc=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  return [COLS.join(','),...rows.map(r=>COLS.map(k=>esc(r[k])).join(','))].join('\n')+'\n';}
+
+// ---------- GitHub API
+async function gh(path,opts={}){
+  const r=await fetch(`https://api.github.com/repos/${S.owner}/${S.repo}/${path}`,{...opts,headers:{
+    'Accept':'application/vnd.github+json','Authorization':`Bearer ${S.token}`,'X-GitHub-Api-Version':'2022-11-28',...(opts.headers||{})}});
+  if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}const e=new Error(`${r.status}: ${m}`);e.status=r.status;throw e;}
+  return r.status===204?null:r.json();
+}
+const enc = p => p.split('/').map(encodeURIComponent).join('/');
+async function getFile(p){const d=await gh(`contents/${enc(p)}?ref=main&t=${Date.now()}`);return {text:b64ToText(d.content),sha:d.sha};}
+async function putFile(p,b64,msg,sha){const body={message:msg,content:b64,branch:'main'};if(sha)body.sha=sha;
+  const d=await gh(`contents/${enc(p)}`,{method:'PUT',body:JSON.stringify(body)});return d.content.sha;}
+
+// ---------- messages
+function note(text,kind='',ms=0){const el=document.createElement('div');el.className='note '+kind;el.textContent=text;$('#msg').prepend(el);
+  if(ms)setTimeout(()=>el.remove(),ms);return el;}
+function clearNotes(){$('#msg').innerHTML='';}
+
+// ---------- load
+async function load(){
+  clearNotes();
+  if(!S.token){openSetup();return;}
+  const busy=note('Loading your schedule…','busy');
+  try{
+    const dir=await gh(`contents/content?ref=main&t=${Date.now()}`);
+    S.batches={};
+    for(const d of dir.filter(x=>x.type==='dir')){
+      try{
+        const meta=JSON.parse((await getFile(`content/${d.name}/batch.json`)).text);
+        const sc=await getFile(`content/${d.name}/schedule.csv`);
+        S.batches[d.name]={start:meta.start_date,meta,sha:sc.sha,rows:parseCSV(sc.text)};
+      }catch(e){if(e.status!==404)throw e;}
+    }
+    try{const p=await getFile('state/posted.json');S.posted=JSON.parse(p.text||'{}');}catch(e){S.posted={};}
+    busy.remove();render();
+  }catch(e){busy.remove();
+    if(e.status===401||e.status===403)note('Your GitHub key was rejected. Open Settings and check it has Contents: Read and write on this repo.','err');
+    else if(e.status===404)note(`Couldn't find the repo ${S.owner}/${S.repo}. Check Settings.`,'err');
+    else note('Could not load: '+e.message,'err');}
+}
+
+function items(){
+  const out=[];
+  for(const [b,B] of Object.entries(S.batches))B.rows.forEach((r,idx)=>{
+    if(!r.id)return;const date=addDays(B.start,parseInt(r.day,10)||0);
+    out.push({b,idx,row:r,key:`${b}/${r.id}`,date,time:(r.time||'').trim(),type:(r.type||'').trim().toLowerCase(),
+      media:(r.media||'').split('|').map(s=>s.trim()).filter(Boolean)});});
+  return out.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+}
+function status(it){const p=S.posted[it.key];if(p&&p.status==='posted')return['posted','Posted'];
+  if(p&&p.status==='failed')return['failed',p.attempts>=3?'Failed':'Retrying'];
+  if(at(it.date,it.time)<new Date(Date.now()-LATE_H*36e5))return['missed','Missed'];return['','Scheduled'];}
+function mediaUrl(b,f){return S.local[`${b}/${f}`]||`https://raw.githubusercontent.com/${S.owner}/${S.repo}/main/content/${enc(b)}/${enc(f)}`;}
+const isVid = f => /\.(mp4|mov)$/i.test(f);
+
+// ---------- render
+function render(){
+  const all=items(),grid=$('#grid');grid.innerHTML='';
+  const ws=S.week,we=new Date(ws);we.setDate(we.getDate()+6);
+  $('#wlabel').textContent=`${fmtDate(ws)} – ${fmtDate(we)}`;
+  const todayStr=ymd(new Date());
+  for(let i=0;i<7;i++){
+    const d=new Date(ws);d.setDate(d.getDate()+i);const ds=ymd(d);
+    const dayItems=all.filter(x=>x.date===ds);
+    const times=[...new Set([...SLOTS.map(s=>s.t),...dayItems.map(x=>x.time)])].sort();
+    const col=document.createElement('div');col.className='day'+(ds===todayStr?' today':'');
+    col.innerHTML=`<div class="dh"><b>${fmtDay(d)}</b><span>${fmtDate(d)}</span></div><div class="slots"></div>`;
+    const slots=col.querySelector('.slots');
+    for(const t of times){
+      const def=SLOTS.find(s=>s.t===t);const here=dayItems.filter(x=>x.time===t);
+      const el=document.createElement('div');el.className='slot';
+      if(at(ds,t)<new Date(Date.now()-LATE_H*36e5))el.classList.add('past');
+      el.innerHTML=`<div class="st"><span>${t}</span><span>${def?def.n:''}</span></div>`;
+      if(!here.length)el.insertAdjacentHTML('beforeend',`<div class="empty">Drop ${def&&def.k==='story'?'a story':'an image or video'} here</div>`);
+      here.forEach(it=>el.appendChild(cardEl(it)));
+      bindDrop(el,ds,t,def?def.k:'post');slots.appendChild(el);
+    }
+    const add=document.createElement('button');add.className='add';add.textContent='+ Add another time';
+    add.onclick=()=>{const t=prompt('Time for the new slot (24-hour, e.g. 17:00):','17:00');
+      if(t&&/^\d{1,2}:\d{2}$/.test(t.trim())){const tt=t.trim().padStart(5,'0');SLOTS_EXTRA.push([ds,tt]);renderExtra();}};
+    slots.appendChild(add);grid.appendChild(col);
+  }
+  renderExtra(false);
+}
+const SLOTS_EXTRA=[];
+function renderExtra(redo=true){ // empty custom slots the user added this session
+  if(redo){render();return;}
+  for(const [ds,t] of SLOTS_EXTRA){
+    const col=[...document.querySelectorAll('.day')].find((c,i)=>{const d=new Date(S.week);d.setDate(d.getDate()+i);return ymd(d)===ds;});
+    if(!col)continue;if([...col.querySelectorAll('.st span:first-child')].some(s=>s.textContent===t))continue;
+    const el=document.createElement('div');el.className='slot';el.innerHTML=`<div class="st"><span>${t}</span><span>Extra</span></div><div class="empty">Drop an image or video here</div>`;
+    bindDrop(el,ds,t,'post');
+    const slots=col.querySelector('.slots');
+    const after=[...slots.querySelectorAll('.slot')].find(s=>s.querySelector('.st span').textContent>t);
+    slots.insertBefore(el,after||slots.querySelector('.add'));
+  }
+}
+function cardEl(it){
+  const [sc,sl]=status(it);const c=document.createElement('div');c.className='card';c.draggable=sc!=='posted';
+  const f=it.media[0]||'';
+  const th=f&&!isVid(f)?`<img class="th" src="${mediaUrl(it.b,f)}" alt="">`:`<div class="th">${it.type==='reel'?'🎬':'▶'}</div>`;
+  const cap=(it.row.caption||'').replace(/\\n/g,' ');
+  c.innerHTML=`${th}<div class="cm"><div class="chips"><span class="chip ${it.type}">${it.type}${it.media.length>1?' ×'+it.media.length:''}</span>${sc?`<span class="chip ${sc}">${sl}</span>`:''}</div><div class="cap">${esc(cap)||'<i>No caption</i>'}</div></div>`;
+  c.title=sc==='failed'?(S.posted[it.key].error||''):'';
+  c.addEventListener('dragstart',e=>{S.drag=it.key;e.dataTransfer.setData('text/plain',it.key);e.dataTransfer.effectAllowed='move';});
+  c.addEventListener('dragend',()=>S.drag=null);
+  c.onclick=()=>openEdit(it);
+  return c;
+}
+const esc = s => s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---------- drag & drop
+function bindDrop(el,ds,t,kind){
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('over'));
+  el.addEventListener('drop',async e=>{
+    e.preventDefault();el.classList.remove('over');
+    if(at(ds,t)<new Date(Date.now()-LATE_H*36e5)){note('That time has already passed. Pick a slot later today or in the future.','err',5000);return;}
+    const files=[...(e.dataTransfer.files||[])];
+    if(files.length){newFromFiles(files,ds,t,kind);return;}
+    const key=e.dataTransfer.getData('text/plain')||S.drag;if(key)moveItem(key,ds,t);
+  });
+}
+
+// ---------- prepare dropped files
+function loadImage(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>res({im,u});im.onerror=rej;im.src=u;});}
+async function toJpeg(file){
+  const {im,u}=await loadImage(file);const cv=document.createElement('canvas');cv.width=im.naturalWidth;cv.height=im.naturalHeight;
+  const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0);URL.revokeObjectURL(u);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));
+  return {blob,w:cv.width,h:cv.height,url:URL.createObjectURL(blob),ext:'jpg'};
+}
+async function prepFiles(files){
+  const out=[];
+  for(const f of files){
+    if(f.type.startsWith('image/'))out.push(await toJpeg(f));
+    else if(/video\/(mp4|quicktime)/.test(f.type)||/\.(mp4|mov)$/i.test(f.name)){
+      if(f.size>95*1024*1024)throw new Error(`${f.name} is over 95 MB. GitHub won't accept it; export it smaller.`);
+      out.push({blob:f,url:URL.createObjectURL(f),ext:f.name.toLowerCase().endsWith('.mov')?'mov':'mp4',video:true});
+    } else throw new Error(`${f.name} isn't an image or an .mp4/.mov video.`);
+  }
+  return out;
+}
+function sizeWarn(type,m){
+  if(!m||m.video||!m.w)return'';const r=m.w/m.h;
+  if(type==='story'&&Math.abs(r-9/16)>.03)return'Stories look best at 1080×1920 (9:16). This image will be shown with bars or cropped.';
+  if((type==='post'||type==='carousel')&&(r<0.8-0.01||r>1.91))return'Instagram feed posts must be between 4:5 (portrait) and 1.91:1 (landscape). This one will be rejected.';
+  return'';
+}
+
+// ---------- create / edit
+async function newFromFiles(files,ds,t,kind){
+  let media;try{media=await prepFiles(files);}catch(e){note(e.message,'err',8000);return;}
+  let type=kind==='story'?'story':(media.length>1?'carousel':(media[0].video?'reel':'post'));
+  if(kind==='story'&&media.length>1){note('A story takes one image or video. Using the first one.','',5000);media=media.slice(0,1);}
+  openEdit({isNew:true,date:ds,time:t,type,media:[],row:{caption:''},prepared:media});
+}
+
+function openEdit(it){
+  const posted=status(it)[0]==='posted'&&!it.isNew;
+  const prev=it.prepared?it.prepared.map(m=>m.url):it.media.map(f=>mediaUrl(it.b,f));
+  const vids=it.prepared?it.prepared.map(m=>!!m.video):it.media.map(isVid);
+  const pv=prev.map((u,i)=>vids[i]?`<video src="${u}" controls muted></video>`:`<img src="${u}" alt="">`);
+  const box=$('#editbox');
+  box.innerHTML=`<h2>${it.isNew?'New '+it.type:posted?'Posted ✅':'Edit '+it.type}</h2>
+  <div class="mgrid"><div class="prev">${pv[0]||''}${pv.length>1?`<div class="pv">${pv.slice(1).join('')}</div>`:''}<div class="warn" id="sw"></div></div>
+  <div>
+    <div class="row"><div><label>Date</label><input type="date" id="fd" value="${it.date}" ${posted?'disabled':''}></div>
+    <div><label>Time</label><input type="time" id="ft" value="${it.time}" ${posted?'disabled':''}></div></div>
+    <label>Type</label><select id="fty" ${posted?'disabled':''}>${['post','story','reel','carousel'].map(x=>`<option ${x===it.type?'selected':''}>${x}</option>`).join('')}</select>
+    <label>Caption <span class="hint" id="cc"></span></label>
+    <textarea id="fc" ${posted?'disabled':''} placeholder="Write your caption and hashtags…">${esc((it.row.caption||'').replace(/\\n/g,'\n'))}</textarea>
+    <div class="hint">Stories don't show captions on Instagram. Put any text in the image itself.</div>
+  </div></div>
+  <div class="acts">${!it.isNew&&!posted?'<button class="btn r left" id="del">Remove from schedule</button>':''}
+  <button class="btn" id="cancel">${posted?'Close':'Cancel'}</button>${posted?'':'<button class="btn g" id="save">Save</button>'}</div>`;
+  const upd=()=>{const c=$('#fc').value;const tags=(c.match(/#\w+/g)||[]).length;
+    $('#cc').textContent=`${c.length}/2200 · ${tags}/30 hashtags`;$('#cc').style.color=(c.length>2200||tags>30)?'#b3261e':'';
+    $('#sw').textContent=it.prepared?sizeWarn($('#fty').value,it.prepared[0]):'';};
+  $('#fc').oninput=upd;$('#fty').onchange=upd;upd();
+  $('#cancel').onclick=closeEdit;
+  if($('#del'))$('#del').onclick=()=>removeItem(it);
+  if($('#save'))$('#save').onclick=()=>saveEdit(it);
+  $('#edit').classList.add('on');
+}
+function closeEdit(){$('#edit').classList.remove('on');}
+
+function check(type,n,vids,caption,date,time){
+  if(!date||!time)return'Pick a date and time.';
+  if(at(date,time)<new Date(Date.now()-LATE_H*36e5))return'That time has already passed.';
+  if(caption.length>2200)return'Caption is over 2,200 characters.';
+  if((caption.match(/#\w+/g)||[]).length>30)return'Instagram allows up to 30 hashtags.';
+  if(type==='post'&&(n!==1||vids[0]))return'A post needs one image. Use "reel" for a video.';
+  if(type==='reel'&&(n!==1||!vids[0]))return'A reel needs one video.';
+  if(type==='story'&&n!==1)return'A story takes one image or video.';
+  if(type==='carousel'&&(n<2||n>10))return'A carousel needs 2 to 10 images or videos.';
+  return'';
+}
+
+async function ensureBatch(){
+  if(S.batches[NEW_BATCH])return;
+  const start=ymd(monday(new Date()));
+  await putFile(`content/${NEW_BATCH}/batch.json`,textToB64(JSON.stringify({start_date:start,note:'Posts added from the planner.'},null,2)+'\n'),'Planner: create uploads folder');
+  const sha=await putFile(`content/${NEW_BATCH}/schedule.csv`,textToB64(toCSV([])),'Planner: create schedule');
+  S.batches[NEW_BATCH]={start,sha,rows:[]};
+}
+async function saveBatch(b,msg){
+  const B=S.batches[b];
+  try{B.sha=await putFile(`content/${b}/schedule.csv`,textToB64(toCSV(B.rows)),msg,B.sha);}
+  catch(e){if(e.status===409||e.status===422){note('The schedule changed somewhere else. Refreshing. Please try again.','err',6000);await load();}throw e;}
+}
+
+async function saveEdit(it){
+  const date=$('#fd').value,time=$('#ft').value,type=$('#fty').value,caption=$('#fc').value.trim();
+  const n=it.prepared?it.prepared.length:it.media.length,vids=it.prepared?it.prepared.map(m=>!!m.video):it.media.map(isVid);
+  const bad=check(type,n,vids,type==='story'?'':caption,date,time);if(bad){alert(bad);return;}
+  $('#save').disabled=true;$('#save').textContent='Saving…';
+  const busy=note(it.isNew?'Uploading… (videos can take a minute)':'Saving…','busy');
+  try{
+    if(it.isNew){
+      await ensureBatch();const B=S.batches[NEW_BATCH];const id='p'+Date.now().toString(36);const files=[];
+      for(let i=0;i<it.prepared.length;i++){const m=it.prepared[i];const fn=`${id}-${i+1}.${m.ext}`;
+        const b64=bytesToB64(new Uint8Array(await m.blob.arrayBuffer()));
+        await putFile(`content/${NEW_BATCH}/${fn}`,b64,`Planner: upload ${fn}`);S.local[`${NEW_BATCH}/${fn}`]=m.url;files.push(fn);}
+      B.rows.push({id,day:String(utcDays(date)-utcDays(B.start)),time,type,media:files.join('|'),caption:type==='story'?'':caption});
+      await saveBatch(NEW_BATCH,`Planner: schedule ${type} for ${date} ${time}`);
+    }else{
+      const B=S.batches[it.b],r=B.rows[it.idx];
+      Object.assign(r,{day:String(utcDays(date)-utcDays(B.start)),time,type,caption:type==='story'?'':caption});
+      await saveBatch(it.b,`Planner: update ${it.key}`);
+    }
+    busy.remove();closeEdit();render();note('Saved ✅ It will post automatically at the set time.','ok',4000);
+  }catch(e){busy.remove();note('Save failed: '+e.message,'err');$('#save').disabled=false;$('#save').textContent='Save';}
+}
+
+async function moveItem(key,ds,t){
+  const it=items().find(x=>x.key===key);if(!it)return;
+  if(status(it)[0]==='posted'){note('That one has already been posted.','err',4000);return;}
+  if(it.date===ds&&it.time===t)return;
+  const B=S.batches[it.b];const r=B.rows[it.idx];const old={day:r.day,time:r.time};
+  r.day=String(utcDays(ds)-utcDays(B.start));r.time=t;render();
+  try{await saveBatch(it.b,`Planner: move ${key} to ${ds} ${t}`);note(`Moved to ${fmtDate(parseYmd(ds))} at ${t} ✅`,'ok',3000);}
+  catch(e){Object.assign(r,old);render();note('Move failed: '+e.message,'err');}
+}
+
+async function removeItem(it){
+  if(!confirm('Remove this from the schedule? (The file stays in your repo.)'))return;
+  const B=S.batches[it.b];const removed=B.rows.splice(it.idx,1);
+  try{await saveBatch(it.b,`Planner: remove ${it.key}`);closeEdit();render();note('Removed.','ok',3000);}
+  catch(e){B.rows.splice(it.idx,0,...removed);note('Remove failed: '+e.message,'err');}
+}
+
+// ---------- buttons
+$('#prev').onclick=()=>{S.week.setDate(S.week.getDate()-7);render();};
+$('#next').onclick=()=>{S.week.setDate(S.week.getDate()+7);render();};
+$('#today').onclick=()=>{S.week=monday(new Date());render();};
+$('#reload').onclick=load;
+$('#postnow').onclick=async()=>{
+  try{await gh('actions/workflows/post.yml/dispatches',{method:'POST',body:JSON.stringify({ref:'main',inputs:{mode:'run'}})});
+    note('Started. Anything due will post within a minute or two. Click Refresh after that to see it marked Posted.','ok',8000);}
+  catch(e){note('Could not start it: '+e.message+'. Check your key has Actions: Read and write.','err',8000);}
+};
+function openSetup(){$('#tok').value=S.token;$('#own').value=S.owner;$('#rep').value=S.repo;$('#setup').classList.add('on');}
+$('#settings').onclick=openSetup;
+$('#closeset').onclick=()=>$('#setup').classList.remove('on');
+$('#saveset').onclick=()=>{S.token=$('#tok').value.trim();S.owner=$('#own').value.trim();S.repo=$('#rep').value.trim();
+  localStorage.setItem('om_token',S.token);localStorage.setItem('om_owner',S.owner);localStorage.setItem('om_repo',S.repo);
+  $('#setup').classList.remove('on');load();};
+$('#forget').onclick=()=>{localStorage.removeItem('om_token');S.token='';$('#tok').value='';note('Key removed from this browser.','ok',3000);};
+window.addEventListener('dragover',e=>e.preventDefault());window.addEventListener('drop',e=>e.preventDefault());
+load();
+</script>
+</body>
+</html>
