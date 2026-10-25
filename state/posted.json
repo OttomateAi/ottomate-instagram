@@ -1,4 +1,9 @@
 {
+  "batch-01-launch-week/intro-1": {
+    "at": "2026-10-25T18:25+00:00",
+    "media_id": "18120621433934785",
+    "status": "posted"
+  },
   "batch-01-launch-week/intro-2": {
     "at": "2026-10-25T17:56+00:00",
     "media_id": "18074431277771931",
@@ -10,9 +15,8 @@
     "status": "posted"
   },
   "batch-01-launch-week/story-0": {
-    "at": "2026-10-25T16:58+00:00",
-    "attempts": 1,
-    "error": "Instagram said: The requested resource does not exist (code 24)",
-    "status": "failed"
+    "at": "2026-10-25T18:25+00:00",
+    "media_id": "18131217382701140",
+    "status": "posted"
   }
 }
