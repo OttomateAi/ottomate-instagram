@@ -1,0 +1,9 @@
+{
+  "timezone": "Europe/London",
+  "api_version": "v23.0",
+  "max_posts_per_run": 2,
+  "late_limit_hours": 6,
+  "max_attempts": 3,
+  "reel_cover_ms": 2500,
+  "media_base_url": ""
+}
