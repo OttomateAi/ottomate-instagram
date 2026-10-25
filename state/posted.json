@@ -1,1 +1,8 @@
-{}
+{
+  "batch-01-launch-week/story-0": {
+    "at": "2026-10-25T16:58+00:00",
+    "attempts": 1,
+    "error": "Instagram said: The requested resource does not exist (code 24)",
+    "status": "failed"
+  }
+}
