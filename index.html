@@ -144,7 +144,7 @@ function toCSV(rows){const esc=v=>{v=String(v??'');return /[",\n\r]/.test(v)?'"'
 
 // ---------- GitHub API
 async function gh(path,opts={}){
-  const r=await fetch(`https://api.github.com/repos/${S.owner}/${S.repo}/${path}`,{...opts,headers:{
+  const r=await fetch(`https://api.github.com/repos/${S.owner}/${S.repo}${path?'/'+path:''}`,{...opts,headers:{
     'Accept':'application/vnd.github+json','Authorization':`Bearer ${S.token}`,'X-GitHub-Api-Version':'2022-11-28',...(opts.headers||{})}});
   if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}const e=new Error(`${r.status}: ${m}`);e.status=r.status;throw e;}
   return r.status===204?null:r.json();
@@ -162,24 +162,39 @@ function clearNotes(){$('#msg').innerHTML='';}
 // ---------- load
 async function load(){
   clearNotes();
-  if(!S.token){openSetup();return;}
-  const busy=note('Loading your schedule…','busy');
+  if(!S.token){note('Not connected yet. Click Settings and paste your GitHub key.','err');openSetup();return;}
+  const busy=note(`Connecting to ${S.owner}/${S.repo}…`,'busy');
+  // Step 1: can we reach the repo with this key?
+  try{await gh('');}
+  catch(e){busy.remove();
+    if(e instanceof TypeError)note('Couldn\'t reach GitHub at all. Check your internet, or turn off any ad-blocker/privacy extension for this page, then click Refresh.','err');
+    else if(e.status===401)note('Step 1 failed: GitHub says the key is not valid. It may have been copied with a bit missing. Make a new key and paste it in Settings.','err');
+    else if(e.status===403)note('Step 1 failed: the key is valid but isn\'t allowed to read this repo. Edit the key on GitHub: Repository access must include ottomate-instagram. ('+e.message+')','err');
+    else if(e.status===404)note(`Step 1 failed: can't find the repo "${S.owner}/${S.repo}". Open Settings and check the username and repository name are spelled exactly as on GitHub.`,'err');
+    else note('Step 1 failed: '+e.message,'err');
+    return;}
+  // Step 2: read the content folder and every batch
+  S.batches={};const problems=[];
   try{
     const dir=await gh(`contents/content?ref=main&t=${Date.now()}`);
-    S.batches={};
     for(const d of dir.filter(x=>x.type==='dir')){
       try{
         const meta=JSON.parse((await getFile(`content/${d.name}/batch.json`)).text);
         const sc=await getFile(`content/${d.name}/schedule.csv`);
         S.batches[d.name]={start:meta.start_date,meta,sha:sc.sha,rows:parseCSV(sc.text)};
-      }catch(e){if(e.status!==404)throw e;}
+      }catch(e){problems.push(`${d.name}: ${e instanceof SyntaxError?'batch.json has a typo (check quotes and commas)':e.message}`);}
     }
-    try{const p=await getFile('state/posted.json');S.posted=JSON.parse(p.text||'{}');}catch(e){S.posted={};}
-    busy.remove();render();
   }catch(e){busy.remove();
-    if(e.status===401||e.status===403)note('Your GitHub key was rejected. Open Settings and check it has Contents: Read and write on this repo.','err');
-    else if(e.status===404)note(`Couldn't find the repo ${S.owner}/${S.repo}. Check Settings.`,'err');
-    else note('Could not load: '+e.message,'err');}
+    note(e.status===404?'Step 2 failed: there is no "content" folder in the repo.':'Step 2 failed: '+e.message,'err');return;}
+  try{const p=await getFile('state/posted.json');S.posted=JSON.parse(p.text||'{}');}catch(e){S.posted={};}
+  busy.remove();
+  problems.forEach(p=>note('Problem in '+p,'err'));
+  const all=items();
+  const next=all.find(x=>status(x)[0]===''&&at(x.date,x.time)>=new Date(Date.now()-LATE_H*36e5));
+  note(`Connected ✅ Found ${all.length} item(s) in ${Object.keys(S.batches).length} batch(es)`+
+    (next?`. Next up: ${fmtDay(parseYmd(next.date))} ${fmtDate(parseYmd(next.date))} at ${next.time}.`:'. Nothing upcoming.'),'ok');
+  if(next&&!S.jumped){S.week=monday(parseYmd(next.date));S.jumped=true;}
+  render();
 }
 
 function items(){
