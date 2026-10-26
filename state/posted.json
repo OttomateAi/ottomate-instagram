@@ -5,8 +5,8 @@
     "status": "posted"
   },
   "batch-01-launch-week/d1-pm": {
-    "at": "2026-10-26T19:27+00:00",
-    "attempts": 1,
+    "at": "2026-10-26T20:06+00:00",
+    "attempts": 2,
     "error": "Instagram said: API access blocked. (code 200)",
     "status": "failed"
   },
