@@ -24,6 +24,12 @@
     "media_id": "18131217382701140",
     "status": "posted"
   },
+  "batch-01-launch-week/story-1": {
+    "at": "2026-10-26T13:32+00:00",
+    "attempts": 1,
+    "error": "Instagram said: API access blocked. (code 200)",
+    "status": "failed"
+  },
   "planner-uploads/pmvp77w0w": {
     "at": "2026-10-26T12:12+00:00",
     "media_id": "18031404665910431",
