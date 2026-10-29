@@ -34,6 +34,12 @@
     "error": "Instagram said: API access blocked. (code 200)",
     "status": "failed"
   },
+  "batch-01-launch-week/d4-am": {
+    "at": "2026-10-29T09:20+00:00",
+    "attempts": 1,
+    "error": "Instagram said: API access blocked. (code 200)",
+    "status": "failed"
+  },
   "batch-01-launch-week/intro-1": {
     "at": "2026-10-25T18:25+00:00",
     "media_id": "18120621433934785",
